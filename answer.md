@@ -142,8 +142,8 @@
         }
     }
     // 但上面方式使用 new 会有问题 new func.bind(), this 就不再是 arguments[0] 咯
-    // 所有已下面版本，从 MDN 抄来的
-    Function.prototype.bind = function() {
+    // 所有有下面改进版本，从 MDN 抄来的
+    Function.prototype.bind = function(otherThis) {
         if (typeof this !== 'function') {
             throw new TypeError('function is need');
         }
@@ -154,18 +154,20 @@
         const fBound = function() {
             baseArgs.length = baseArgsLength; // reset to default base arguments 尚不清楚干嘛
             baseArgs.push.apply(baseArgs, arguments);
+
+            // 当 new fBound() 时候，则 this 原型指向 fBound.prototype === new fNOP(), new fNOP() 原型指向 fNOP.prototype
+            // 故而 fNOP.protoype.isPrototypeOf(this) 为 true
             return fToBind.apply(
-                    fNOP.prototype.isPrototypeOf(this) 
-                        ? this 
-                        : otherThis, baseArgs
+                fNOP.prototype.isPrototypeOf(this) ? this : otherThis, 
+                baseArgs
             );
         }
 
+        // 之所以用下面这段，主要是因为怕绑定函数当做构造函数的情况，则需要绑定后的函数 new fBound() 时候，能保持原来的原型链属性
         if (this.prototype) {
-            // Function.prototype.prototype === undefined (Function.prototype => [Function])
             fNOP.prototype = this.prototype;
         }
-        fBound.prototype = new fNOP()
+        fBound.prototype = new fNOP() // (new fNOP()).__proto__ === fNOP.prototype, 相当于 fBound 原型继承 this
 
         return fBound;
     }
