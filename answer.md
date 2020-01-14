@@ -88,7 +88,42 @@
     }
     ```
 
-5.
+5. throttle 节流实现
+
+    ```javascript
+    function throttle(func, interval = 1000) {
+        let lastInvokeTime = null
+        let timer = null
+
+        if (typeof func !== 'function') {
+            throw new TypeError('func must be a function')
+        }
+
+        return function(...args) {
+            const context = this
+            const now = Date.now()
+
+            const executor = function() {
+                lastInvokeTime = Date.now()
+                func.call(context, ...args)
+            }
+
+            // 没执行过，执行
+            if (!lastInvokeTime) {
+                return executor()
+            }
+
+            // 时间间隔过了
+            if (now - lastInvokeTime > interval) {
+                return executor()
+            }
+
+            if (!timer) {
+                timer = setTimeout(executor, interval - (now - lastInvokeTime))
+            }
+        }
+    }
+    ```
 
 6. shallowEqual 实现（react-redux）
 
