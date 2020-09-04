@@ -208,3 +208,31 @@
     }
     // 完全符合标准的： https://github.com/Raynos/function-bind
     ```
+
+
+8. 异步答案
+
+    ```javascript
+    function createFlow(tasks) {
+        // 迭代器, 最终返回 Promise
+        function next(index = 0) {
+            if (index === tasks.length) {
+                return Promise.resolve()
+            }
+
+            const task = tasks[index]
+
+            if (task.run) {
+                return task.run(() => next(index + 1))
+            } else if (Array.isArray(task)) {
+                return createFlow(task, 0).run(() => next(index + 1))
+            } else if (typeof task === 'function') {
+                // 兼容普通函数和 promise 情况
+                return Promise.resolve(task()).then(() => next(index + 1))
+            }
+        }
+        return {
+            run: callback => next().then(callback)
+        }
+    }
+    ```
